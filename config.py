@@ -5,6 +5,7 @@ dataset = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/dataset
 annolist_single_person = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/annolist-singlePerson-h400.mat"
 raw_annolist = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/mpii_human_pose_v1_u12_1.mat"
 
+save_location = "/root/PycharmProjects/deepercut-pytorch/saved/"
 
 dataset_type = 'single'
 train_dataset_length = 100

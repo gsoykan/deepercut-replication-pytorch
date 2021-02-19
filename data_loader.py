@@ -15,11 +15,11 @@ import copy
 from scipy.io import loadmat
 import config
 import dataset.mpii
+from dataset.pose_dataset import ActivityMode
 
-# plt.ion()   # interactive mode
 
 # TODO: WRITE a COLLATE FUNCTION FOR BATCH SIZE > 1
-def create_dataloader(shuffle=False):
-    mpii_dataset = dataset.mpii.MPIIDataset(config)
+def create_dataloader(shuffle=False, activity_mode=ActivityMode.training):
+    mpii_dataset = dataset.mpii.MPIIDataset(config, activity_mode)
     dataloader = DataLoader(mpii_dataset, batch_size=1, shuffle=shuffle)
     return dataloader

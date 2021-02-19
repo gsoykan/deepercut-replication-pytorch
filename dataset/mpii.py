@@ -8,14 +8,15 @@ from skimage import io, transform
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
+from dataset.pose_dataset import ActivityMode
 
 
 class MPII(PoseDataset):
-    def __init__(self, cfg):
+    def __init__(self, cfg, activity_mode=ActivityMode.training):
         cfg.all_joints = [[0, 5], [1, 4], [2, 3], [6, 11], [7, 10], [8, 9], [12], [13]]
         cfg.all_joints_names = ['ankle', 'knee', 'hip', 'wrist', 'elbow', 'shoulder', 'chin', 'forehead']
         cfg.num_joints = 14
-        super().__init__(cfg)
+        super().__init__(cfg, activity_mode)
 
     def mirror_joint_coords(self, joints, image_width):
         joints[:, 1] = image_width - joints[:, 1]
@@ -26,8 +27,8 @@ class MPII(PoseDataset):
 
 
 class MPIIDataset(Dataset):
-    def __init__(self, cfg):
-        self.mpii = MPII(cfg)
+    def __init__(self, cfg, activity_mode=ActivityMode.training):
+        self.mpii = MPII(cfg, activity_mode)
         self.transforms = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
