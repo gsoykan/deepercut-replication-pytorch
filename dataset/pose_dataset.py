@@ -77,9 +77,9 @@ class PoseDataset:
         mlab = sio.loadmat(file_name)
 
         if cfg.dataset_type == 'single':
-            annotations_single = sio.loadmat(cfg.annolist_single_person)['annolist']
-            annotation_single_paths = [annotations_single[0, i][0][0][0][0][0] for i in
-                                       range(annotations_single.shape[1])]
+            cropped_annotations = sio.loadmat(cfg.annolist_single_person)['annolist']
+            annotation_single_paths = [cropped_annotations[0, i][0][0][0][0][0] for i in
+                                       range(cropped_annotations.shape[1])]
 
         self.raw_data = mlab
         mlab = mlab['dataset']
@@ -109,11 +109,22 @@ class PoseDataset:
 
             if cfg.dataset_type == 'single' and im_path not in annotation_single_paths:
                 continue
+            else:
+                annotation_index = annotation_single_paths.index(im_path)
 
             item = DataItem()
             item.image_id = i
             item.im_path = im_path
             item.im_size = sample[1][0]
+
+            if cropped_annotations is not None:
+                item.head_rect = {}
+                head_rect_info = cropped_annotations['annorect'][0, annotation_index][0, 0]
+                item.head_rect['x1'] = head_rect_info['x1'][0, 0]
+                item.head_rect['x2'] = head_rect_info['x2'][0, 0]
+                item.head_rect['y1'] = head_rect_info['y1'][0, 0]
+                item.head_rect['y2'] = head_rect_info['y2'][0, 0]
+
             if len(sample) >= 3:
                 joints = sample[2][0][0]
                 joint_id = joints[:, 0]

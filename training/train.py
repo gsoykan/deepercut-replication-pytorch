@@ -7,7 +7,8 @@ import model.deepercut
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
-
+import accuracy.accuracy
+import numpy as np
 
 def train_model(nn_model, dataloader, criterion, optimizer, scheduler, num_epochs=1):
     since = time.time()
@@ -23,6 +24,7 @@ def train_model(nn_model, dataloader, criterion, optimizer, scheduler, num_epoch
                 nn_model.eval()  # Set model to evaluate mode
 
             running_loss = 0.0
+            running_accuracy = np.zeros((len(dataloader), config.num_joints))
             # running_corrects = 0
 
             # Iterate over data.
@@ -43,19 +45,33 @@ def train_model(nn_model, dataloader, criterion, optimizer, scheduler, num_epoch
 
                 # statistics
                 curr_loss = loss.item()
-                print("batch_count" + str(i_batch))
-                print(curr_loss)
+                if i_batch % 50 == 0:
+                    print("batch_count" + str(i_batch))
+                    print(curr_loss)
                 running_loss += loss.item() * input.size(0)
+
+                # TODO: this can only take first 14 channels of output
+                # TODO: compute offset
+                pose = accuracy.accuracy.argmax_pose_predict(output, None, config.stride)
+                # scale can be computed here by comparing data_item's im_size and input size
+                original_im_size = sample_batched['data_item']['im_size'][0][1:3]
+                input_size = input.shape[2:4]
+                scale = max(input_size / original_im_size.numpy())
+                predictions = accuracy.accuracy.convert_pose_to_prediction(pose, scale)
+                joints = sample_batched['data_item']['joints'][0][0].numpy()
+                head_rect = sample_batched['data_item']['head_rect']
+                acc_map_for__single_input = accuracy.accuracy.compare_predictions_with_joints(predictions, joints, head_rect)
+                running_accuracy[i_batch, :] = acc_map_for__single_input
+
                 # running_corrects += torch.sum(preds == labels.data)
             if phase == 'train':
                 scheduler.step()
 
             epoch_loss = running_loss / len(dataloader)
-            # epoch_acc = running_corrects.double() / dataset_sizes[phase]
+            epoch_acc = accuracy.accuracy.compute_accuracy_percentage_from_running_accuracy(running_accuracy)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss))  # epoch_acc))
-
+                phase, epoch_loss, epoch_acc[config.num_joints]))
             # deep copy the model
             # if phase == 'val' and epoch_acc > best_acc:
             #   best_acc = epoch_acc
@@ -87,4 +103,4 @@ if __name__ == '__main__':
     optimizer = optim.SGD(model.parameters(), lr=0.02, momentum=0.9)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-    model = train_model(model, dataloader, criterion, optimizer, scheduler)
+    model = train_model(model, dataloader, criterion, optimizer, scheduler, num_epochs=20)

@@ -3,9 +3,11 @@ dataset_annotations_dir = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1
 
 dataset = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/dataset.mat"
 annolist_single_person = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/annolist-singlePerson-h400.mat"
+raw_annolist = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/mpii_human_pose_v1_u12_1.mat"
+
 
 dataset_type = 'single'
-train_dataset_length = 1000
+train_dataset_length = 100
 validation_dataset_length = 100
 test_dataset_length = 100
 
@@ -25,6 +27,9 @@ stride = 8
 
 pos_dist_thresh = 17
 locref_stdev = 7.2801
+# used in accuracy head calculation
+sc_bias = 0.6
+PCKh_limit = 0.5
 location_refinement = False
 weigh_only_present_joints = False
 weigh_part_predictions = False
