@@ -51,8 +51,15 @@ class DataItem:
     pass
 
 
+class ActivityMode(Enum):
+    training = 1
+    validation = 2
+    test = 3
+
+
 class PoseDataset:
-    def __init__(self, cfg):
+    def __init__(self, cfg, activity_mode=ActivityMode.training):
+        self.activity_mode = activity_mode
         self.cfg = cfg
         self.data = self.load_dataset() if cfg.dataset else []
         self.num_images = len(self.data)
@@ -68,18 +75,44 @@ class PoseDataset:
         cfg = self.cfg
         file_name = cfg.dataset
         mlab = sio.loadmat(file_name)
+
+        if cfg.dataset_type == 'single':
+            annotations_single = sio.loadmat(cfg.annolist_single_person)['annolist']
+            annotation_single_paths = [annotations_single[0, i][0][0][0][0][0] for i in
+                                       range(annotations_single.shape[1])]
+
         self.raw_data = mlab
         mlab = mlab['dataset']
+        max_num_images = mlab.shape[1]
 
-        num_images = mlab.shape[1]
+        if self.activity_mode == ActivityMode.training:
+            start_index = 0
+            end_index = cfg.train_dataset_length
+
+        if self.activity_mode == ActivityMode.validation:
+            start_index = cfg.train_dataset_length
+            end_index = start_index + cfg.validation_dataset_length
+
+        if self.activity_mode == ActivityMode.test:
+            start_index = cfg.validation_dataset_length + cfg.train_dataset_length
+            end_index = start_index + cfg.test_dataset_length
+
+        if end_index > max_num_images:
+            assert True, "End index should not be greater than max num images"
+
         data = []
         has_gt = True
 
-        for i in range(num_images):
+        for i in range(start_index, end_index):
             sample = mlab[0, i]
+            im_path = sample[0][0]
+
+            if cfg.dataset_type == 'single' and im_path not in annotation_single_paths:
+                continue
+
             item = DataItem()
             item.image_id = i
-            item.im_path = sample[0][0]
+            item.im_path = im_path
             item.im_size = sample[1][0]
             if len(sample) >= 3:
                 joints = sample[2][0][0]
