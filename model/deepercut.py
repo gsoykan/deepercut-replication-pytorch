@@ -69,7 +69,6 @@ class DeeperCut(torch.nn.Module):
                                                            padding=1,
                                                            output_padding=1
                                                            )
-        # TODO: implement location refinement head
 
     def forward(self, x):
         result_dict = {}
