@@ -129,10 +129,10 @@ class PoseDataset:
             if cropped_annotations is not None:
                 item.head_rect = {}
                 head_rect_info = cropped_annotations['annorect'][0, annotation_index][0, 0]
-                item.head_rect['x1'] = head_rect_info['x1'][0, 0]
-                item.head_rect['x2'] = head_rect_info['x2'][0, 0]
-                item.head_rect['y1'] = head_rect_info['y1'][0, 0]
-                item.head_rect['y2'] = head_rect_info['y2'][0, 0]
+                item.head_rect['x1'] = float(head_rect_info['x1'][0, 0])
+                item.head_rect['x2'] = float(head_rect_info['x2'][0, 0])
+                item.head_rect['y1'] = float(head_rect_info['y1'][0, 0])
+                item.head_rect['y2'] = float(head_rect_info['y2'][0, 0])
 
             if len(sample) >= 3:
                 joints = sample[2][0][0]
