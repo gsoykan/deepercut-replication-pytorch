@@ -7,6 +7,8 @@ raw_annolist = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/mpii_human
 
 save_location = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/saved/"
 
+sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
+
 dataset_type = 'single'
 train_dataset_length = 100
 validation_dataset_length = 100

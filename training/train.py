@@ -1,5 +1,4 @@
 import data_loader
-import dataset.mpii
 import config
 import torch
 import time
@@ -122,7 +121,7 @@ if __name__ == '__main__':
                         criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=20)
+                        num_epochs=5)
 
     torch.save(model, config.save_location + "model.pth")
     # model = torch.load(PATH)
