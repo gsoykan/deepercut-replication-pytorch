@@ -4,6 +4,7 @@ from skimage import io
 from torchvision import transforms
 import accuracy.accuracy
 import visualizer
+from model.deepercut import DeeperCutHead
 
 
 def predict_from_image_and_visualize(filename):
@@ -21,11 +22,11 @@ def predict_from_image_and_visualize(filename):
         model.to('cuda')
 
     with torch.no_grad():
-        # TODO: output might be changed later on
         output = model(input_batch)
-
-    pose = accuracy.accuracy.argmax_pose_predict(output, None, config.stride)
-    visualizer.show_heatmaps(input_image, output.cpu().numpy(), pose)
+        part_detection = output[DeeperCutHead.part_detection]
+        locref = output[DeeperCutHead.locref]
+    pose = accuracy.accuracy.argmax_pose_predict(part_detection, locref, config.stride)
+    visualizer.show_heatmaps(input_image, part_detection.cpu().numpy(), pose)
 
 
 if __name__ == '__main__':
