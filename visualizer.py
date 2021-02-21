@@ -1,4 +1,3 @@
-import torch
 import math
 import numpy as np
 import matplotlib
@@ -6,7 +5,6 @@ import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from skimage import io, transform
-import matplotlib.patches as mpatches
 import config
 
 
@@ -62,6 +60,7 @@ def show_heatmaps(img, scmap, pose, cmap="jet"):
     curr_plot.set_title('Pose')
     curr_plot.axis('off')
     curr_plot.imshow(visualize_joints(img, pose))
+    plt.show()
 
 
 def visualize_joints(image, pose):

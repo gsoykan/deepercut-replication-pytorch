@@ -10,13 +10,17 @@ def argmax_pose_predict(scmap, offmat, stride):
     scmap = utils.convert_tensor_to_numpy(scmap)
     if offmat is not None:
         offmat = utils.convert_tensor_to_numpy(offmat)
+        offmat = np.squeeze(offmat)
+        shape = offmat.shape
+        offmat = np.reshape(offmat, (shape[1], shape[2], -1, 2))
+        offmat *= config.locref_stdev
+
     num_joints = scmap.shape[1]
     pose = []
     for joint_idx in range(num_joints):
         maxloc = np.unravel_index(np.argmax(scmap[0, joint_idx, :, :]),
                                   scmap[0, joint_idx, :, :].shape)
-
-        offset = np.array(offmat[maxloc][joint_idx])[::-1] if offmat is not None else 0
+        offset = np.array(list(reversed(offmat[maxloc][joint_idx])))[::-1] if offmat is not None else 0
         pos_f8 = (np.array(maxloc).astype('float') * stride + 0.5 * stride +
                   offset)
         pose.append(np.hstack((pos_f8[::-1],
@@ -50,7 +54,7 @@ def compare_predictions_with_joints(predictions, joints, head_rect):
     for joint in joints:
         joint_id = joint[0]
         gt = joint[1:3]
-        pred = predictions[joint_id][:2] # list(reversed(predictions[joint_id][:2]))
+        pred = predictions[joint_id][:2]  # list(reversed(predictions[joint_id][:2]))
         pckh_distance = get_distance_in_PCKh(pred, gt, head_size)
         if pckh_distance <= config.PCKh_limit:
             acc_map[joint_id] = 1

@@ -10,8 +10,8 @@ save_location = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/saved/"
 sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
 
 dataset_type = 'single'
-train_dataset_length = 100
-validation_dataset_length = 100
+train_dataset_length = 18185
+validation_dataset_length = 500
 test_dataset_length = 100
 
 mirror = True
@@ -33,9 +33,11 @@ locref_stdev = 7.2801
 # used in accuracy head calculation
 sc_bias = 0.6
 PCKh_limit = 0.5
-location_refinement = False
+location_refinement = True
 weigh_only_present_joints = False
 weigh_part_predictions = False
+
+locref_loss_weight = 0.05
 
 num_joints = 14
 all_joints = [[0, 5], [1, 4], [2, 3], [6, 11], [7, 10], [8, 9], [12], [13]]

@@ -3,6 +3,7 @@ import config
 import torch
 import time
 import model.deepercut
+from model.deepercut import DeeperCutHead
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -12,7 +13,8 @@ import copy
 from dataset.pose_dataset import ActivityMode
 
 
-def train_model(nn_model, dataloader, validation_dataloader, criterion, optimizer, scheduler, num_epochs=1):
+def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_criterion, optimizer, scheduler,
+                num_epochs=1):
     since = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
@@ -47,7 +49,19 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, optimize
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
                     output = nn_model(input)
-                    loss = criterion(output, scmap)
+                    part_detection_result = output[DeeperCutHead.part_detection]
+                    loss = criterion(part_detection_result, scmap)
+                    locref_result = None
+                    if config.location_refinement:
+                        locref_map = sample_batched['locref_map']
+                        locref_result = output[DeeperCutHead.locref]
+                        locref_loss_weight = torch.as_tensor(config.locref_loss_weight)
+                        if torch.cuda.is_available():
+                            locref_loss_weight = locref_loss_weight.cuda()
+                        raw_locref_loss = loc_ref_criterion(locref_result, locref_map)
+                        locref_loss = locref_loss_weight * raw_locref_loss
+                        loss += locref_loss
+
                     # backward + optimize only if in training phase
                     if phase == 'train':
                         loss.backward()
@@ -60,9 +74,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, optimize
                     print(curr_loss)
                 running_loss += loss.item() * input.size(0)
 
-                # TODO: this can only take first 14 channels of output
-                # TODO: compute offset
-                pose = accuracy.accuracy.argmax_pose_predict(output, None, config.stride)
+                pose = accuracy.accuracy.argmax_pose_predict(part_detection_result, locref_result, config.stride)
                 # scale can be computed here by comparing data_item's im_size and input size
                 original_im_size = sample_batched['data_item']['im_size'][0][1:3]
                 input_size = input.shape[2:4]
@@ -113,12 +125,14 @@ if __name__ == '__main__':
 
     # this will be moved to inside for dynamic weights
     criterion = nn.BCEWithLogitsLoss()
+    loc_ref_criterion = nn.SmoothL1Loss()
     optimizer = optim.SGD(model.parameters(), lr=0.02, momentum=0.9)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     model = train_model(model, dataloader,
                         val_dataloader,
                         criterion,
+                        loc_ref_criterion,
                         optimizer,
                         scheduler,
                         num_epochs=5)
