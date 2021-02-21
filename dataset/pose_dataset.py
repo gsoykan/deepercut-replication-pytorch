@@ -63,10 +63,19 @@ class PoseDataset:
         self.cfg = cfg
         self.data = self.load_dataset() if cfg.dataset else []
         self.num_images = len(self.data)
-        if self.cfg.mirror:
+        if activity_mode is ActivityMode.training:
+            self.mirror = self.cfg.mirror
+        else:
+            self.mirror = False
+
+        if self.mirror:
             self.symmetric_joints = mirror_joints_map(cfg.all_joints, cfg.num_joints)
         self.curr_img = 0
-        self.set_shuffle(cfg.shuffle)
+        if activity_mode is ActivityMode.training:
+            self.set_shuffle(cfg.shuffle)
+        else:
+            self.set_shuffle(False)
+
         self.set_pairwise_stats_collect(cfg.pairwise_stats_collect)
         # if self.cfg.pairwise_predict:
         # self.pairwise_stats = load_pairwise_stats(self.cfg)
@@ -158,8 +167,8 @@ class PoseDataset:
     def set_shuffle(self, shuffle):
         self.shuffle = shuffle
         if not shuffle:
-            assert not self.cfg.mirror
             self.image_indices = np.arange(self.num_images)
+            #  assert not self.mirror
 
     # BATCH RELATED
     def next_batch(self):
@@ -181,14 +190,16 @@ class PoseDataset:
         self.curr_img = (self.curr_img + 1) % self.num_training_samples()
 
         imidx = self.image_indices[curr_img]
-        mirror = self.cfg.mirror and self.mirrored[curr_img]
+        mirror = self.mirror and self.mirrored[curr_img]
 
         return imidx, mirror
 
     def fetch_item_at_index(self, idx):
+        if self.curr_img == 0 and self.shuffle:
+            self.shuffle_images()
         curr_img = idx
         imidx = self.image_indices[curr_img]
-        mirror = self.cfg.mirror and self.mirrored[curr_img]
+        mirror = self.mirror and self.mirrored[curr_img]
         data_item = self.get_training_sample(imidx)
         scale = self.get_scale()
         if not self.is_valid_size(data_item.im_size, scale):
@@ -198,7 +209,7 @@ class PoseDataset:
 
     def num_training_samples(self):
         num = self.num_images
-        if self.cfg.mirror:
+        if self.mirror:
             num *= 2
         return num
 
@@ -207,7 +218,7 @@ class PoseDataset:
 
     def shuffle_images(self):
         num_images = self.num_images
-        if self.cfg.mirror:
+        if self.mirror:
             image_indices = np.random.permutation(num_images * 2)
             self.mirrored = image_indices >= num_images
             image_indices[self.mirrored] = image_indices[self.mirrored] - num_images
@@ -234,7 +245,7 @@ class PoseDataset:
         scaled_img_size = arr(img.shape[0:2])
 
         if mirror:
-            img = np.fliplr(img)
+            img = np.fliplr(img).copy()
 
         batch = {'image': img}
 

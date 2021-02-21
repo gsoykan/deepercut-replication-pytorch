@@ -74,6 +74,12 @@ class DeeperCut(torch.nn.Module):
         part_detection_result = self.part_detection_head(backbone_result)
         return part_detection_result
 
+    def freeze_bn(self):
+        """Freeze BatchNorm layers."""
+        for layer in self.modules():
+            if isinstance(layer, nn.BatchNorm2d):
+                layer.eval()
+
 
 if __name__ == '__main__':
     dc = DeeperCut(config.num_joints);

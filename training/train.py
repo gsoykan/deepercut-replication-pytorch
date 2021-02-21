@@ -32,6 +32,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, optimize
                 nn_model.train()  # Set model to training mode
             else:
                 nn_model.eval()  # Set model to evaluate mode
+            nn_model.freeze_bn()
 
             running_loss = 0.0
             running_accuracy = np.zeros((len(dataloaders[phase]), config.num_joints))
@@ -100,14 +101,13 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, optimize
 
 
 if __name__ == '__main__':
-    mpii_dataset = dataset.mpii.MPIIDataset(config)
-    dataloader = data_loader.create_dataloader()
     val_dataloader = data_loader.create_dataloader(shuffle=False,
                                                    activity_mode=ActivityMode.validation)
+    dataloader = data_loader.create_dataloader()
     # sample_batched = next(iter(dataloader))
 
-    # model = model.deepercut.DeeperCut(config.num_joints)
-    model = torch.load( config.save_location + "model.pth")
+    model = model.deepercut.DeeperCut(config.num_joints)
+    # model = torch.load( config.save_location + "model.pth")
 
     if torch.cuda.is_available():
         model.to('cuda')
@@ -122,7 +122,7 @@ if __name__ == '__main__':
                         criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=1)
+                        num_epochs=20)
 
     torch.save(model, config.save_location + "model.pth")
     # model = torch.load(PATH)
