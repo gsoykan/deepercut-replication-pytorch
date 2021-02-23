@@ -2,6 +2,7 @@ import numpy as np
 import utils.utils as  utils
 import config
 import math
+from math import sqrt
 
 
 # Takes scmap and locref
@@ -33,9 +34,11 @@ def convert_pose_to_prediction(pose, global_scale):
     pose_refscale[:, 0:2] /= global_scale
     return pose_refscale
 
+def manuel_dist(x1, y1, x2, y2):
+    return sqrt( (x2 - x1)**2 + (y2 - y1)**2 )
 
 def get_head_size(x1, y1, x2, y2):
-    head_size = config.sc_bias * math.dist([x1, y1], [x2, y2])
+    head_size = config.sc_bias * manuel_dist(x1, y1, x2, y2)
     return head_size
 
 

@@ -159,7 +159,7 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=5, "mock_model")
+                        num_epochs=5, model_name="mock_model")
 
     # model = torch.load(PATH)
     # model.eval()
