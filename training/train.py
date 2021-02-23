@@ -19,6 +19,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
     since = time.time()
     best_model_wts = copy.deepcopy(nn_model.state_dict())
     best_acc = 0.0
+    file1 = open(config.save_location + model_name + "_info.txt", "a")
 
     dataloaders = {
         'train': dataloader,
@@ -93,11 +94,15 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = accuracy.accuracy.compute_accuracy_percentage_from_running_accuracy(running_accuracy)
             avg_epoch_acc = epoch_acc[config.num_joints]
-            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
-                phase, epoch_loss, avg_epoch_acc))
+
+            info_text = '{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, avg_epoch_acc)
+            file1.write(info_text + " \n")
+            print(info_text)
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
+                file1.write("new_best_acc" + str(best_acc) + " \n")
                 torch.save(nn_model, config.save_location + model_name + ".pth")
             # best_model_wts = copy.deepcopy(nn_model.state_dict())
 
@@ -110,6 +115,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
+    file1.close()
     return nn_model
 
 
