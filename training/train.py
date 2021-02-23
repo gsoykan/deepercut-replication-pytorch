@@ -12,6 +12,7 @@ import accuracy.accuracy
 import numpy as np
 import copy
 from dataset.pose_dataset import ActivityMode
+from utils.loss_acc_recorder import LossAccRecorder
 
 
 def write_to_file(filename, text):
@@ -19,12 +20,21 @@ def write_to_file(filename, text):
     file1.write(text)
     file1.close()
 
-def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_criterion, optimizer, scheduler,
-                num_epochs=1, model_name="model"):
+
+def train_model(nn_model,
+                dataloader,
+                validation_dataloader,
+                criterion,
+                loc_ref_criterion,
+                optimizer,
+                scheduler,
+                loss_acc_recorder,
+                num_epochs=1,
+                model_name="model"
+                ):
     since = time.time()
     best_model_wts = copy.deepcopy(nn_model.state_dict())
     best_acc = 0.0
-    
 
     dataloaders = {
         'train': dataloader,
@@ -36,10 +46,10 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
         print('-' * 10)
 
         for phase in ['train', 'val']:  # 'val']:
-            begin_text = "begin epoch: " + str(epoch) + " phase: " + phase + " \n"              
+            begin_text = "begin epoch: " + str(epoch) + " phase: " + phase + " \n"
             write_to_file(config.save_location + model_name + "_info.txt", begin_text)
             print(begin_text)
-            
+
             if phase == 'train':
                 nn_model.train()  # Set model to training mode
             else:
@@ -49,7 +59,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             running_loss = 0.0
             running_accuracy = np.zeros((len(dataloaders[phase]), config.num_joints))
             # running_corrects = 0
-            
+
             write_to_file(config.save_location + model_name + "_info.txt", "iteration is about to start \n")
             # Iterate over data.
             for i_batch, sample_batched in enumerate(dataloaders[phase]):
@@ -102,16 +112,22 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
                 # TODO: indentation is critical here
             if phase == 'train':
                 scheduler.step()
+                loss_acc_recorder.increment_epoch()
 
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = accuracy.accuracy.compute_accuracy_percentage_from_running_accuracy(running_accuracy)
             avg_epoch_acc = epoch_acc[config.num_joints]
-
             info_text = '{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, avg_epoch_acc)
             write_to_file(config.save_location + model_name + "_info.txt", info_text + " \n")
             print(info_text)
-            print_elapsed_time(since, str(epoch) + " Epoch complete")
+            print_elapsed_time(since, str(epoch) + " Epoch complete ")
+            if phase == 'val':
+                loss_acc_recorder.add_validation_info(epoch_loss, avg_epoch_acc)
+            else:
+                loss_acc_recorder.add_training_info(epoch_loss, avg_epoch_acc)
+            loss_acc_recorder.save_recorder()
+
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
@@ -126,15 +142,17 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
-  
+
     return nn_model
 
+
 prev_lr = 0
+
 
 def print_elapsed_time(since, message):
     time_elapsed = time.time() - since
     print(message + 'in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
+        time_elapsed // 60, time_elapsed % 60) + " \n")
 
 
 def lr_determiner(iteration):
@@ -182,13 +200,17 @@ def begin_training():
 
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
+    model_name = "test_model"
+    loss_acc_recorder = LossAccRecorder(model_name=model_name)
     model = train_model(nn_model, dataloader,
                         val_dataloader,
                         criterion,
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=27, model_name="test_model")
+                        num_epochs=3,
+                        model_name=model_name,
+                        loss_acc_recorder=loss_acc_recorder)
 
     # model = torch.load(PATH)
     # model.eval()
