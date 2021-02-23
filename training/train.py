@@ -50,7 +50,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             running_accuracy = np.zeros((len(dataloaders[phase]), config.num_joints))
             # running_corrects = 0
             
-            write_to_file(config.save_location + model_name + "_info.txt", "iteration is about to start")
+            write_to_file(config.save_location + model_name + "_info.txt", "iteration is about to start \n")
             # Iterate over data.
             for i_batch, sample_batched in enumerate(dataloaders[phase]):
                 input = sample_batched['image']
@@ -111,18 +111,18 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
                 phase, epoch_loss, avg_epoch_acc)
             write_to_file(config.save_location + model_name + "_info.txt", info_text + " \n")
             print(info_text)
-            print_elapsed_time(since, str(epoch) + "Epoch complete")
+            print_elapsed_time(since, str(epoch) + " Epoch complete")
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
-                write_to_file(config.save_location + model_name + "_info.txt", "new_best_acc" + str(best_acc) + " \n")
+                write_to_file(config.save_location + model_name + "_info.txt", "new_best_acc " + str(best_acc) + " \n")
                 torch.save(nn_model, config.save_location + model_name + ".pth")
             # best_model_wts = copy.deepcopy(nn_model.state_dict())
 
         print()
 
-    print_elapsed_time(since, "Training complete")
-    print('Best val Acc: {:4f}'.format(best_acc))
+    print_elapsed_time(since, "Training complete" + " \n")
+    print('Best val Acc: {:4f}'.format(best_acc) + " \n")
 
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
@@ -188,7 +188,7 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=27, model_name="23_2_resnet50_2")
+                        num_epochs=27, model_name="test_model")
 
     # model = torch.load(PATH)
     # model.eval()
