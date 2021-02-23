@@ -10,8 +10,8 @@ save_location = "/kuacc/users/gsoykan20/deepercut-replication-pytorch/saved/"
 sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
 
 dataset_type = 'single'
-train_dataset_length = 10
-validation_dataset_length = 10
+train_dataset_length = 18185
+validation_dataset_length = 500
 test_dataset_length = 100
 
 mirror = True
