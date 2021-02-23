@@ -4,6 +4,7 @@ import torch
 import time
 import model.deepercut
 from model.deepercut import DeeperCutHead
+from model.deepercut import DeeperCut
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -14,9 +15,9 @@ from dataset.pose_dataset import ActivityMode
 
 
 def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_criterion, optimizer, scheduler,
-                num_epochs=1):
+                num_epochs=1, model_name="model"):
     since = time.time()
-    best_model_wts = copy.deepcopy(model.state_dict())
+    best_model_wts = copy.deepcopy(nn_model.state_dict())
     best_acc = 0.0
 
     dataloaders = {
@@ -86,8 +87,8 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
                                                                                               head_rect)
                 running_accuracy[i_batch, :] = acc_map_for__single_input
 
-            if phase == 'train':
-                scheduler.step()
+                if phase == 'train':
+                    scheduler.step()
 
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = accuracy.accuracy.compute_accuracy_percentage_from_running_accuracy(running_accuracy)
@@ -97,7 +98,8 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
-                best_model_wts = copy.deepcopy(nn_model.state_dict())
+    		torch.save(nn_model, config.save_location + model_name + ".pth")
+		# best_model_wts = copy.deepcopy(nn_model.state_dict())
 
         print()
 
@@ -110,33 +112,57 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
     nn_model.load_state_dict(best_model_wts)
     return nn_model
 
+def lr_determiner(iteration):
+    """
+    - [0.005, 10000]
+    - [0.02, 430000]
+    - [0.002, 730000]
+    - [0.001, 1030000]
+    """
+    if iteration > 1030000:
+        return 0.001
+    elif iteration > 730000:
+        return 0.002
+    elif iteration > 430000:
+        return 0.02
+    else:
+        return 0.005
 
-if __name__ == '__main__':
+def begin_training():
     val_dataloader = data_loader.create_dataloader(shuffle=False,
-                                                   activity_mode=ActivityMode.validation)
+                                    activity_mode=ActivityMode.validation)
     dataloader = data_loader.create_dataloader()
     # sample_batched = next(iter(dataloader))
 
-    model = model.deepercut.DeeperCut(config.num_joints)
+    nn_model = DeeperCut(config.num_joints)
     # model = torch.load( config.save_location + "model.pth")
 
     if torch.cuda.is_available():
-        model.to('cuda')
+        nn_model.to('cuda')
 
     # this will be moved to inside for dynamic weights
     criterion = nn.BCEWithLogitsLoss()
     loc_ref_criterion = nn.SmoothL1Loss()
-    optimizer = optim.SGD(model.parameters(), lr=0.02, momentum=0.9)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    
+    optimizer = optim.SGD(nn_model.parameters(), lr=0.005, momentum=0.9)
+    
+    lr_lambda = lambda iteration: lr_determiner(iteration)
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+    
+    
+    # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-    model = train_model(model, dataloader,
+    model = train_model(nn_model, dataloader,
                         val_dataloader,
                         criterion,
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=5)
+                        num_epochs=5, "mock_model" )
 
-    torch.save(model, config.save_location + "model.pth")
     # model = torch.load(PATH)
     # model.eval()
+    
+if __name__ == '__main__':
+    begin_training()
+
