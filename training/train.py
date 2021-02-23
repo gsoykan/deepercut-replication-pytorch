@@ -31,6 +31,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
         print('-' * 10)
 
         for phase in ['train', 'val']:  # 'val']:
+            file1.write("begin epoch: " + str(epoch) + " phase: " + phase + " \n")
             if phase == 'train':
                 nn_model.train()  # Set model to training mode
             else:
