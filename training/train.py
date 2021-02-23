@@ -14,12 +14,17 @@ import copy
 from dataset.pose_dataset import ActivityMode
 
 
+def write_to_file(filename, text):
+    file1 = open(filename, "a")
+    file1.write(text)
+    file1.close()
+
 def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_criterion, optimizer, scheduler,
                 num_epochs=1, model_name="model"):
     since = time.time()
     best_model_wts = copy.deepcopy(nn_model.state_dict())
     best_acc = 0.0
-    file1 = open(config.save_location + model_name + "_info.txt", "a")
+    
 
     dataloaders = {
         'train': dataloader,
@@ -31,7 +36,10 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
         print('-' * 10)
 
         for phase in ['train', 'val']:  # 'val']:
-            file1.write("begin epoch: " + str(epoch) + " phase: " + phase + " \n")
+            begin_text = "begin epoch: " + str(epoch) + " phase: " + phase + " \n"              
+            write_to_file(config.save_location + model_name + "_info.txt", begin_text)
+            print(begin_text)
+            
             if phase == 'train':
                 nn_model.train()  # Set model to training mode
             else:
@@ -41,7 +49,8 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             running_loss = 0.0
             running_accuracy = np.zeros((len(dataloaders[phase]), config.num_joints))
             # running_corrects = 0
-
+            
+            write_to_file(config.save_location + model_name + "_info.txt", "iteration is about to start")
             # Iterate over data.
             for i_batch, sample_batched in enumerate(dataloaders[phase]):
                 input = sample_batched['image']
@@ -72,7 +81,8 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
                 # statistics
                 curr_loss = loss.item()
-                if i_batch % 50 == 0:
+                if i_batch % 5000 == 0:
+                    write_to_file(config.save_location + model_name + "_info.txt", "iteration counter: " + str(i_batch))
                     print("batch_count" + str(i_batch))
                     print(curr_loss)
                 running_loss += loss.item() * input.size(0)
@@ -98,12 +108,12 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
             info_text = '{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, avg_epoch_acc)
-            file1.write(info_text + " \n")
+            write_to_file(config.save_location + model_name + "_info.txt", info_text + " \n")
             print(info_text)
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
-                file1.write("new_best_acc" + str(best_acc) + " \n")
+                write_to_file(config.save_location + model_name + "_info.txt", "new_best_acc" + str(best_acc) + " \n")
                 torch.save(nn_model, config.save_location + model_name + ".pth")
             # best_model_wts = copy.deepcopy(nn_model.state_dict())
 
@@ -116,9 +126,10 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
-    file1.close()
+  
     return nn_model
 
+prev_lr = 0
 
 def lr_determiner(iteration):
     """
@@ -127,14 +138,19 @@ def lr_determiner(iteration):
     - [0.002, 730000]
     - [0.001, 1030000]
     """
-    if iteration > 1030000:
-        return 0.001
-    elif iteration > 730000:
-        return 0.002
+    global prev_lr
+    if iteration > 730000:
+        lr = 0.001
     elif iteration > 430000:
-        return 0.02
+        lr = 0.002
+    elif iteration > 10000:
+        lr = 0.02
     else:
-        return 0.005
+        lr = 0.005
+    if prev_lr != lr:
+        print("LR CHANGED TO: " + str(lr))
+    prev_lr = lr
+    return lr
 
 
 def begin_training():
@@ -154,7 +170,6 @@ def begin_training():
     loc_ref_criterion = nn.SmoothL1Loss()
 
     optimizer = optim.SGD(nn_model.parameters(), lr=0.005, momentum=0.9)
-
     lr_lambda = lambda iteration: lr_determiner(iteration)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
@@ -166,7 +181,7 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=5, model_name="mock_model")
+                        num_epochs=27, model_name="23_2_resnet50_2")
 
     # model = torch.load(PATH)
     # model.eval()
