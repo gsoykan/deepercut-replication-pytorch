@@ -98,8 +98,8 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
-    		torch.save(nn_model, config.save_location + model_name + ".pth")
-		# best_model_wts = copy.deepcopy(nn_model.state_dict())
+                torch.save(nn_model, config.save_location + model_name + ".pth")
+            # best_model_wts = copy.deepcopy(nn_model.state_dict())
 
         print()
 
@@ -111,6 +111,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
     return nn_model
+
 
 def lr_determiner(iteration):
     """
@@ -128,9 +129,10 @@ def lr_determiner(iteration):
     else:
         return 0.005
 
+
 def begin_training():
     val_dataloader = data_loader.create_dataloader(shuffle=False,
-                                    activity_mode=ActivityMode.validation)
+                                                   activity_mode=ActivityMode.validation)
     dataloader = data_loader.create_dataloader()
     # sample_batched = next(iter(dataloader))
 
@@ -143,13 +145,12 @@ def begin_training():
     # this will be moved to inside for dynamic weights
     criterion = nn.BCEWithLogitsLoss()
     loc_ref_criterion = nn.SmoothL1Loss()
-    
+
     optimizer = optim.SGD(nn_model.parameters(), lr=0.005, momentum=0.9)
-    
+
     lr_lambda = lambda iteration: lr_determiner(iteration)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
-    
-    
+
     # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     model = train_model(nn_model, dataloader,
@@ -158,11 +159,11 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=5, "mock_model" )
+                        num_epochs=5, "mock_model")
 
     # model = torch.load(PATH)
     # model.eval()
-    
+
+
 if __name__ == '__main__':
     begin_training()
-
