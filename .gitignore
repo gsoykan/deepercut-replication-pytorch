@@ -152,3 +152,7 @@ crashlytics-build.properties
 fabric.properties
 
 *.pth
+
+/saved/*.txt
+
+*.obj
