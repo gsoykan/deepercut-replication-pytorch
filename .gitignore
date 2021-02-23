@@ -154,3 +154,5 @@ fabric.properties
 *.pth
 
 /saved/*.txt
+
+*.obj
