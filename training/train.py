@@ -89,8 +89,9 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
                                                                                               head_rect)
                 running_accuracy[i_batch, :] = acc_map_for__single_input
 
-                if phase == 'train':
-                    scheduler.step()
+                # TODO: indentation is critical here
+            if phase == 'train':
+                scheduler.step()
 
             epoch_loss = running_loss / len(dataloaders[phase])
             epoch_acc = accuracy.accuracy.compute_accuracy_percentage_from_running_accuracy(running_accuracy)
@@ -100,6 +101,7 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
                 phase, epoch_loss, avg_epoch_acc)
             file1.write(info_text + " \n")
             print(info_text)
+            print_elapsed_time(since, str(epoch) + "Epoch complete")
             # deep copy the model
             if phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
@@ -109,15 +111,19 @@ def train_model(nn_model, dataloader, validation_dataloader, criterion, loc_ref_
 
         print()
 
-    time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(
-        time_elapsed // 60, time_elapsed % 60))
-    # print('Best val Acc: {:4f}'.format(best_acc))
+    print_elapsed_time(since, "Training complete")
+    print('Best val Acc: {:4f}'.format(best_acc))
 
     # load best model weights
     nn_model.load_state_dict(best_model_wts)
     file1.close()
     return nn_model
+
+
+def print_elapsed_time(since, message):
+    time_elapsed = time.time() - since
+    print(message + 'in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
 
 
 def lr_determiner(iteration):
@@ -153,12 +159,12 @@ def begin_training():
     criterion = nn.BCEWithLogitsLoss()
     loc_ref_criterion = nn.SmoothL1Loss()
 
-    optimizer = optim.SGD(nn_model.parameters(), lr=0.005, momentum=0.9)
+    optimizer = optim.SGD(nn_model.parameters(), lr=0.02, momentum=0.9)
 
     lr_lambda = lambda iteration: lr_determiner(iteration)
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
 
-    # scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     model = train_model(nn_model, dataloader,
                         val_dataloader,
