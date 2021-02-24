@@ -13,7 +13,7 @@ import numpy as np
 import copy
 from dataset.pose_dataset import ActivityMode
 from utils.loss_acc_recorder import LossAccRecorder
-
+from model.deepercut import DeeperCutBackbone
 
 def write_to_file(filename, text):
     file1 = open(filename, "a")
@@ -177,13 +177,15 @@ def lr_determiner(iteration):
     return lr
 
 
-def begin_training():
+def begin_training(model_name, backbone):
     val_dataloader = data_loader.create_dataloader(shuffle=False,
                                                    activity_mode=ActivityMode.validation)
     dataloader = data_loader.create_dataloader()
     # sample_batched = next(iter(dataloader))
 
-    nn_model = DeeperCut(config.num_joints)
+    nn_model = DeeperCut(config.num_joints,
+                         backbone=backbone,
+                         enable_skip_connection=config.enable_skip_connections)
     # model = torch.load( config.save_location + "model.pth")
 
     if torch.cuda.is_available():
@@ -200,7 +202,6 @@ def begin_training():
 
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-    model_name = "test_model"
     loss_acc_recorder = LossAccRecorder(model_name=model_name)
     model = train_model(nn_model, dataloader,
                         val_dataloader,
@@ -208,7 +209,7 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=3,
+                        num_epochs=5,
                         model_name=model_name,
                         loss_acc_recorder=loss_acc_recorder)
 
@@ -217,4 +218,4 @@ def begin_training():
 
 
 if __name__ == '__main__':
-    begin_training()
+    begin_training("resnet50_200_skip1", DeeperCutBackbone.ResNet50)

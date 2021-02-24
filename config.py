@@ -10,7 +10,7 @@ save_location = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/saved/"
 sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
 
 dataset_type = 'single'
-train_dataset_length = 2000
+train_dataset_length = 200
 validation_dataset_length = 200
 test_dataset_length = 100
 
@@ -36,6 +36,7 @@ PCKh_limit = 0.5
 location_refinement = True
 weigh_only_present_joints = False
 weigh_part_predictions = False
+enable_skip_connections = True
 
 locref_loss_weight = 0.05
 
