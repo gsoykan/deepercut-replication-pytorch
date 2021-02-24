@@ -1,17 +1,16 @@
 dataset_dir = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/"
-dataset_annotations_dir = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/dataset.mat"
 
-dataset = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/dataset.mat"
-annolist_single_person = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/annolist-singlePerson-h400.mat"
-raw_annolist = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/mpii_human_pose_v1_u12_1.mat"
-
-save_location = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/saved/"
+dataset_annotations_dir = "/userfiles/gsoykan20/mpii_human_pose/cropped/dataset.mat"
+dataset = "/userfiles/gsoykan20/mpii_human_pose/cropped/dataset.mat"
+annolist_single_person = "/userfiles/gsoykan20/mpii_human_pose/cropped/annolist-singlePerson-h400.mat"
+raw_annolist = "/datasets/mpii_human_pose/mpii_human_pose_v1_u12_1.mat"
+save_location = "/kuacc/users/gsoykan20/deepercut-replication-pytorch/saved/"
 
 sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
 
 dataset_type = 'single'
-train_dataset_length = 200
-validation_dataset_length = 200
+train_dataset_length = 18185
+validation_dataset_length = 500
 test_dataset_length = 100
 
 mirror = True
