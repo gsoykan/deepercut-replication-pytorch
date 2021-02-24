@@ -35,6 +35,7 @@ PCKh_limit = 0.5
 location_refinement = True
 weigh_only_present_joints = False
 weigh_part_predictions = False
+enable_skip_connections = True
 
 locref_loss_weight = 0.05
 

@@ -13,6 +13,7 @@ import numpy as np
 import copy
 from dataset.pose_dataset import ActivityMode
 from utils.loss_acc_recorder import LossAccRecorder
+from model.deepercut import DeeperCutBackbone
 
 
 def write_to_file(filename, text):
@@ -26,6 +27,7 @@ def train_model(nn_model,
                 validation_dataloader,
                 criterion,
                 loc_ref_criterion,
+                intermediate_supervision_criterion,
                 optimizer,
                 scheduler,
                 loss_acc_recorder,
@@ -73,6 +75,7 @@ def train_model(nn_model,
                     output = nn_model(input)
                     part_detection_result = output[DeeperCutHead.part_detection]
                     loss = criterion(part_detection_result, scmap)
+
                     locref_result = None
                     if config.location_refinement:
                         locref_map = sample_batched['locref_map']
@@ -83,6 +86,11 @@ def train_model(nn_model,
                         raw_locref_loss = loc_ref_criterion(locref_result, locref_map)
                         locref_loss = locref_loss_weight * raw_locref_loss
                         loss += locref_loss
+
+                    if config.enable_intermediate_supervision:
+                        intermediate_supervision_result = output[DeeperCutHead.intermediate_supervision]
+                        intermediate_loss = intermediate_supervision_criterion(intermediate_supervision_result, scmap)
+                        loss += intermediate_loss
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -177,13 +185,14 @@ def lr_determiner(iteration):
     return lr
 
 
-def begin_training():
+def begin_training(model_name, backbone):
     val_dataloader = data_loader.create_dataloader(shuffle=False,
                                                    activity_mode=ActivityMode.validation)
     dataloader = data_loader.create_dataloader()
     # sample_batched = next(iter(dataloader))
 
-    nn_model = DeeperCut(config.num_joints)
+    nn_model = DeeperCut(config.num_joints,
+                         backbone=backbone)
     # model = torch.load( config.save_location + "model.pth")
 
     if torch.cuda.is_available():
@@ -191,6 +200,7 @@ def begin_training():
 
     # this will be moved to inside for dynamic weights
     criterion = nn.BCEWithLogitsLoss()
+    intermediate_supervision_criterion = nn.BCEWithLogitsLoss()
     loc_ref_criterion = nn.SmoothL1Loss()
 
     optimizer = optim.SGD(nn_model.parameters(), lr=0.02, momentum=0.9)
@@ -200,15 +210,15 @@ def begin_training():
 
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-    model_name = "23_2_resnet50_3_lossacc"
     loss_acc_recorder = LossAccRecorder(model_name=model_name)
     model = train_model(nn_model, dataloader,
                         val_dataloader,
                         criterion,
                         loc_ref_criterion,
+                        intermediate_supervision_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=27,
+                        num_epochs=config.training_epoch,
                         model_name=model_name,
                         loss_acc_recorder=loss_acc_recorder)
 
@@ -217,4 +227,4 @@ def begin_training():
 
 
 if __name__ == '__main__':
-    begin_training()
+    begin_training("resnet50_200_skip1", DeeperCutBackbone.ResNet50)
