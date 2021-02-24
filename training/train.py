@@ -15,6 +15,7 @@ from dataset.pose_dataset import ActivityMode
 from utils.loss_acc_recorder import LossAccRecorder
 from model.deepercut import DeeperCutBackbone
 
+
 def write_to_file(filename, text):
     file1 = open(filename, "a")
     file1.write(text)
@@ -26,6 +27,7 @@ def train_model(nn_model,
                 validation_dataloader,
                 criterion,
                 loc_ref_criterion,
+                intermediate_supervision_criterion,
                 optimizer,
                 scheduler,
                 loss_acc_recorder,
@@ -73,6 +75,7 @@ def train_model(nn_model,
                     output = nn_model(input)
                     part_detection_result = output[DeeperCutHead.part_detection]
                     loss = criterion(part_detection_result, scmap)
+
                     locref_result = None
                     if config.location_refinement:
                         locref_map = sample_batched['locref_map']
@@ -83,6 +86,11 @@ def train_model(nn_model,
                         raw_locref_loss = loc_ref_criterion(locref_result, locref_map)
                         locref_loss = locref_loss_weight * raw_locref_loss
                         loss += locref_loss
+
+                    if config.enable_intermediate_supervision:
+                        intermediate_supervision_result = output[DeeperCutHead.intermediate_supervision]
+                        intermediate_loss = intermediate_supervision_criterion(intermediate_supervision_result, scmap)
+                        loss += intermediate_loss
 
                     # backward + optimize only if in training phase
                     if phase == 'train':
@@ -184,8 +192,7 @@ def begin_training(model_name, backbone):
     # sample_batched = next(iter(dataloader))
 
     nn_model = DeeperCut(config.num_joints,
-                         backbone=backbone,
-                         enable_skip_connection=config.enable_skip_connections)
+                         backbone=backbone)
     # model = torch.load( config.save_location + "model.pth")
 
     if torch.cuda.is_available():
@@ -193,6 +200,7 @@ def begin_training(model_name, backbone):
 
     # this will be moved to inside for dynamic weights
     criterion = nn.BCEWithLogitsLoss()
+    intermediate_supervision_criterion = nn.BCEWithLogitsLoss()
     loc_ref_criterion = nn.SmoothL1Loss()
 
     optimizer = optim.SGD(nn_model.parameters(), lr=0.02, momentum=0.9)
@@ -207,9 +215,10 @@ def begin_training(model_name, backbone):
                         val_dataloader,
                         criterion,
                         loc_ref_criterion,
+                        intermediate_supervision_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=5,
+                        num_epochs=config.training_epoch,
                         model_name=model_name,
                         loss_acc_recorder=loss_acc_recorder)
 
