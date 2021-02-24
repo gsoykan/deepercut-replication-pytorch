@@ -34,9 +34,13 @@ locref_stdev = 7.2801
 sc_bias = 0.6
 PCKh_limit = 0.5
 location_refinement = True
+enable_skip_connections = True
+enable_intermediate_supervision = True
 weigh_only_present_joints = False
 weigh_part_predictions = False
-enable_skip_connections = True
+
+training_epoch = 10
+
 
 locref_loss_weight = 0.05
 
