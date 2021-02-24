@@ -200,7 +200,7 @@ def begin_training():
 
     scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
-    model_name = "test_model"
+    model_name = "23_2_resnet50_3_lossacc"
     loss_acc_recorder = LossAccRecorder(model_name=model_name)
     model = train_model(nn_model, dataloader,
                         val_dataloader,
@@ -208,7 +208,7 @@ def begin_training():
                         loc_ref_criterion,
                         optimizer,
                         scheduler,
-                        num_epochs=3,
+                        num_epochs=27,
                         model_name=model_name,
                         loss_acc_recorder=loss_acc_recorder)
 
