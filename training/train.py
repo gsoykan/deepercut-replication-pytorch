@@ -99,7 +99,7 @@ def train_model(nn_model,
 
                 # statistics
                 curr_loss = loss.item()
-                if i_batch % 5000 == 0:
+                if i_batch % config.print_interval == 0:
                     write_to_file(config.save_location + model_name + "_info.txt", "iteration counter: " + str(i_batch))
                     print("batch_count" + str(i_batch))
                     print(curr_loss)

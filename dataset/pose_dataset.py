@@ -8,7 +8,7 @@ from numpy import concatenate as cat
 
 import scipy.io as sio
 from skimage import io, transform
-
+import copy
 
 def extend_crop(crop, crop_pad, image_size):
     crop[0] = max(crop[0] - crop_pad, 0)
@@ -226,11 +226,12 @@ class PoseDataset:
         else:
             self.image_indices = np.random.permutation(num_images)
 
-    def make_batch(self, data_item, scale, mirror):
-        im_file = data_item.im_path
+    def make_batch(self, data_item_original, scale, mirror):
+        im_file = data_item_original.im_path
         logging.debug('image %s', im_file)
         logging.debug('mirror %r', mirror)
         image = io.imread(im_file)
+        data_item = data_item_original
 
         if self.has_gt:
             joints = np.copy(data_item.joints)
@@ -254,6 +255,9 @@ class PoseDataset:
             if mirror:
                 joints = [self.mirror_joints(person_joints, self.symmetric_joints, image.shape[1]) for person_joints in
                           joints]
+                data_item = copy.deepcopy(data_item)
+                data_item.joints = [self.mirror_joints(person_joints, self.symmetric_joints, image.shape[1]) for person_joints in
+                          data_item.joints]
 
             sm_size = np.ceil(scaled_img_size / (stride * 2)).astype(int) * 2
             scaled_joints = [person_joints[:, 1:3] * scale for person_joints in joints]
