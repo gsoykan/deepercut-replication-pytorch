@@ -7,12 +7,14 @@ raw_annolist = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/mpii_human
 
 save_location = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/saved/"
 
-sample_image_path = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/image.png"
+sample_image_path = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropped/im24642_11.png"
+# sample_image_directory = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images"
+sample_image_directory = "/home/gsoykan20/Desktop/saved-images/bob-colt-01"
 
 dataset_type = 'single'
-train_dataset_length = 200
-validation_dataset_length = 200
-test_dataset_length = 100
+train_dataset_length = 0
+validation_dataset_length = 500
+test_dataset_length = 500
 
 mirror = True
 shuffle = True

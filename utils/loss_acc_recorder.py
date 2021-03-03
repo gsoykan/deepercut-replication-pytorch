@@ -1,6 +1,7 @@
 import pickle
 import config
 
+# TODO: TEST MIGHT BE ADDED HERE
 class LossAccRecorder:
     def __init__(self, model_name):
         self.model_name = model_name

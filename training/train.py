@@ -25,6 +25,7 @@ def write_to_file(filename, text):
 def train_model(nn_model,
                 dataloader,
                 validation_dataloader,
+                test_dataloader,
                 criterion,
                 loc_ref_criterion,
                 intermediate_supervision_criterion,
@@ -32,7 +33,9 @@ def train_model(nn_model,
                 scheduler,
                 loss_acc_recorder,
                 num_epochs=1,
-                model_name="model"
+                model_name="model",
+                phases=['train', 'val'],
+                save_model=True
                 ):
     since = time.time()
     best_model_wts = copy.deepcopy(nn_model.state_dict())
@@ -40,14 +43,15 @@ def train_model(nn_model,
 
     dataloaders = {
         'train': dataloader,
-        'val': validation_dataloader
+        'val': validation_dataloader,
+        'test': test_dataloader
     }
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         print('-' * 10)
 
-        for phase in ['train', 'val']:  # 'val']:
+        for phase in phases:
             begin_text = "begin epoch: " + str(epoch) + " phase: " + phase + " \n"
             write_to_file(config.save_location + model_name + "_info.txt", begin_text)
             print(begin_text)
@@ -68,7 +72,8 @@ def train_model(nn_model,
                 input = sample_batched['image']
                 scmap = sample_batched['scmap']
                 # zero the parameter gradients
-                optimizer.zero_grad()
+                if optimizer is not None:
+                    optimizer.zero_grad()
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
@@ -137,7 +142,7 @@ def train_model(nn_model,
             loss_acc_recorder.save_recorder()
 
             # deep copy the model
-            if phase == 'val' and avg_epoch_acc > best_acc:
+            if save_model and phase == 'val' and avg_epoch_acc > best_acc:
                 best_acc = avg_epoch_acc
                 write_to_file(config.save_location + model_name + "_info.txt", "new_best_acc " + str(best_acc) + " \n")
                 torch.save(nn_model, config.save_location + model_name + ".pth")
@@ -213,6 +218,7 @@ def begin_training(model_name, backbone):
     loss_acc_recorder = LossAccRecorder(model_name=model_name)
     model = train_model(nn_model, dataloader,
                         val_dataloader,
+                        None,
                         criterion,
                         loc_ref_criterion,
                         intermediate_supervision_criterion,
@@ -226,5 +232,40 @@ def begin_training(model_name, backbone):
     # model.eval()
 
 
+def collect_statistics_from_pretrained(model_name,
+                                       loss_acc_record_name,
+                                       info_file_name,
+                                       phases=['val']):
+    val_dataloader = data_loader.create_dataloader(shuffle=False,
+                                                   activity_mode=ActivityMode.validation)
+    test_dataloader = data_loader.create_dataloader(shuffle=False,
+                                                   activity_mode=ActivityMode.test)
+    nn_model = torch.load(config.save_location + model_name + ".pth")
+    if torch.cuda.is_available():
+        nn_model.to('cuda')
+    criterion = nn.BCEWithLogitsLoss()
+    intermediate_supervision_criterion = nn.BCEWithLogitsLoss()
+    loc_ref_criterion = nn.SmoothL1Loss()
+    loss_acc_recorder = LossAccRecorder(model_name=loss_acc_record_name)
+    model = train_model(nn_model,
+                        None,
+                        val_dataloader,
+                        test_dataloader,
+                        criterion,
+                        loc_ref_criterion,
+                        intermediate_supervision_criterion,
+                        None,
+                        None,
+                        num_epochs=1,
+                        model_name=info_file_name,
+                        loss_acc_recorder=loss_acc_recorder,
+                        phases=phases,
+                        save_model=False)
+
+
 if __name__ == '__main__':
-    begin_training("resnet50_200_skip1", DeeperCutBackbone.ResNet50)
+    # begin_training("resnet50_200_skip1", DeeperCutBackbone.ResNet50)
+    collect_statistics_from_pretrained("resnet152_interm",
+                                       "resnet152_interm_measurements_train_subset",
+                                       "resnet152_interm_measurements_train_subset",
+                                       phases=['val']);

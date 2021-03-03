@@ -1,12 +1,8 @@
 import data_loader
-import visualizer
 import dataset.mpii
 import config
-import matplotlib.pyplot as plt
 import torch
 import model.deepercut
-import time
-
 
 # https://pytorch.org/tutorials/beginner/data_loading_tutorial.html
 

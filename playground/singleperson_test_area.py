@@ -3,11 +3,12 @@ import torch
 from skimage import io
 from torchvision import transforms
 import accuracy.accuracy
-import visualizer
+from visualization import visualizer
 from model.deepercut import DeeperCutHead
+import os
 
 
-def predict_from_image_and_visualize(filename):
+def predict_from_image_and_visualize(filename, model_name):
     input_image = io.imread(filename)
     preprocess = transforms.Compose([
         transforms.ToTensor(),
@@ -15,7 +16,7 @@ def predict_from_image_and_visualize(filename):
     ])
     input_tensor = preprocess(input_image)
     input_batch = input_tensor.unsqueeze(0)  # create a mini-batch as expected by the model
-    model = torch.load(config.save_location + "model.pth")
+    model = torch.load(config.save_location + model_name + ".pth")
     # move the input and model to GPU for speed if available
     if torch.cuda.is_available():
         input_batch = input_batch.to('cuda')
@@ -29,5 +30,27 @@ def predict_from_image_and_visualize(filename):
     visualizer.show_heatmaps(input_image, part_detection.cpu().numpy(), pose)
 
 
+# https://www.newbedev.com/python/howto/how-to-iterate-over-files-in-a-given-directory/
+def iterate_over_files_in_dir_and_visualize(directory,
+                                            model_name,
+                                            specific_paths
+                                            ):
+    directory = fr'{directory}'
+    available_extensions = [".jpg", ".png", ".JPEG"]
+    for subdir, dirs, files in os.walk(directory):
+        for filename in files:
+            filepath = subdir + os.sep + filename
+            check = map(lambda ext: filepath.endswith(ext), available_extensions)
+            if True in check:
+                if (specific_paths is not None and filepath in specific_paths) or specific_paths is None:
+                    predict_from_image_and_visualize(filepath, model_name=model_name)
+                else:
+                    continue
+
+
 if __name__ == '__main__':
-    predict_from_image_and_visualize(config.sample_image_path)
+    # predict_from_image_and_visualize("/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/s7.jpg", "resnet152_interm")
+    iterate_over_files_in_dir_and_visualize(config.sample_image_directory,
+                                            "resnet152_interm",
+                                            specific_paths=None)
+    print("end of visualization")
