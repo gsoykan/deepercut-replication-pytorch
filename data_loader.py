@@ -19,7 +19,10 @@ from dataset.pose_dataset import ActivityMode
 
 
 # TODO: WRITE a COLLATE FUNCTION FOR BATCH SIZE > 1
-def create_dataloader(shuffle=False, activity_mode=ActivityMode.training):
-    mpii_dataset = dataset.mpii.MPIIDataset(config, activity_mode)
+def create_dataloader(shuffle=False,
+                      activity_mode=ActivityMode.training,
+                      should_transform=True):
+    mpii_dataset = dataset.mpii.MPIIDataset(config, activity_mode, should_transform)
     dataloader = DataLoader(mpii_dataset, batch_size=1, shuffle=shuffle)
     return dataloader
+fromdas

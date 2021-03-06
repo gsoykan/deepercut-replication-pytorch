@@ -27,12 +27,17 @@ class MPII(PoseDataset):
 
 
 class MPIIDataset(Dataset):
-    def __init__(self, cfg, activity_mode=ActivityMode.training):
+    def __init__(self, cfg, activity_mode=ActivityMode.training, should_transform=True):
         self.mpii = MPII(cfg, activity_mode)
-        self.transforms = transforms.Compose([
+        if should_transform:
+            self.transforms = transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ])
+            ])
+        else:
+            self.transforms = transforms.Compose([
+                transforms.ToTensor()
+            ])
 
     def __getitem__(self, idx) -> T_co:
         if torch.is_tensor(idx):

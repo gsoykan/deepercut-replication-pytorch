@@ -3,9 +3,12 @@ import torch
 from skimage import io
 from torchvision import transforms
 import accuracy.accuracy
+import data_loader
+from utils.utils import convert_tensor_to_numpy
 from visualization import visualizer
 from model.deepercut import DeeperCutHead
 import os
+import numpy as np
 
 
 def predict_from_image_and_visualize(filename, model_name):
@@ -48,9 +51,23 @@ def iterate_over_files_in_dir_and_visualize(directory,
                     continue
 
 
+def visualize_ground_truth():
+    dataloader = data_loader.create_dataloader(should_transform=False)
+    for i_batch, sample_batched in enumerate(dataloader):
+        input = sample_batched['image']
+        scmap = sample_batched['scmap']
+        pose = accuracy.accuracy.argmax_pose_predict(scmap, None, config.stride)
+        input = np.squeeze(convert_tensor_to_numpy(input))
+        input = np.transpose(input, (1, 2, 0))
+        scmap = convert_tensor_to_numpy(scmap)
+        visualizer.show_heatmaps(input, scmap, pose)
+        print("visualizing" + str(i_batch))
+
+
 if __name__ == '__main__':
     # predict_from_image_and_visualize("/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/s7.jpg", "resnet152_interm")
-    iterate_over_files_in_dir_and_visualize(config.sample_image_directory,
-                                            "resnet152_interm",
-                                            specific_paths=None)
+    #iterate_over_files_in_dir_and_visualize(config.sample_image_directory,
+    #                                        "resnet152_interm",
+    #                                        specific_paths=None)
+    visualize_ground_truth()
     print("end of visualization")
