@@ -66,8 +66,8 @@ def visualize_ground_truth():
 
 if __name__ == '__main__':
     # predict_from_image_and_visualize("/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images/s7.jpg", "resnet152_interm")
-    #iterate_over_files_in_dir_and_visualize(config.sample_image_directory,
-    #                                        "resnet152_interm",
-    #                                        specific_paths=None)
-    visualize_ground_truth()
+    iterate_over_files_in_dir_and_visualize(config.sample_image_directory,
+                                            "resnet152_interm",
+                                            specific_paths=None)
+    #visualize_ground_truth()
     print("end of visualization")

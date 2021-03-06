@@ -11,10 +11,16 @@ sample_image_path = "/home/gsoykan20/Downloads/datasets/mpii_human_pose_v1/cropp
 # sample_image_directory = "/home/gsoykan20/PycharmProjects/deepercut-pytorch/sample_images"
 sample_image_directory = "/home/gsoykan20/Desktop/saved-images/bob-colt-01"
 
+comic_annotations_json_location = '/home/gsoykan20/PycharmProjects/panel-extractor-admin/labeler/comic_annotation.json'
+
+# Decides whether to use COMIC data from 'annotations_json_locations'
+# or mpii dataset from 'dataset'
+use_comic_data = True
+
 dataset_type = 'single'
 train_dataset_length = 0
-validation_dataset_length = 500
-test_dataset_length = 500
+validation_dataset_length = 0
+test_dataset_length = 62
 
 mirror = True
 shuffle = True

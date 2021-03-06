@@ -266,6 +266,6 @@ def collect_statistics_from_pretrained(model_name,
 if __name__ == '__main__':
     # begin_training("resnet50_200_skip1", DeeperCutBackbone.ResNet50)
     collect_statistics_from_pretrained("resnet152_interm",
-                                       "resnet152_interm_measurements_train_subset",
-                                       "resnet152_interm_measurements_train_subset",
-                                       phases=['val']);
+                                       loss_acc_record_name="resnet152_interm_measurements_comic62",
+                                       info_file_name="resnet152_interm_measurements_comic62",
+                                       phases=['test']);

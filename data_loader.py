@@ -25,4 +25,3 @@ def create_dataloader(shuffle=False,
     mpii_dataset = dataset.mpii.MPIIDataset(config, activity_mode, should_transform)
     dataloader = DataLoader(mpii_dataset, batch_size=1, shuffle=shuffle)
     return dataloader
-fromdas

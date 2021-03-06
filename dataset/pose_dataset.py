@@ -10,6 +10,10 @@ import scipy.io as sio
 from skimage import io, transform
 import copy
 
+from data_models.data_models import DataItem
+from utils.annotator_json_reader import read_comic_dataset
+
+
 def extend_crop(crop, crop_pad, image_size):
     crop[0] = max(crop[0] - crop_pad, 0)
     crop[1] = max(crop[1] - crop_pad, 0)
@@ -46,11 +50,6 @@ def get_pairwise_index(j_id, j_id_end, num_joints):
 def data_to_input(data):
     return np.expand_dims(data, axis=0).astype(float)
 
-
-class DataItem:
-    pass
-
-
 class ActivityMode(Enum):
     training = 1
     validation = 2
@@ -61,7 +60,12 @@ class PoseDataset:
     def __init__(self, cfg, activity_mode=ActivityMode.training):
         self.activity_mode = activity_mode
         self.cfg = cfg
-        self.data = self.load_dataset() if cfg.dataset else []
+
+        if cfg.use_comic_data:
+            self.data = self.load_comic_dataset() if cfg.comic_annotations_json_location else []
+        else:
+            self.data = self.load_mpii_dataset() if cfg.dataset else []
+
         self.num_images = len(self.data)
         if activity_mode is ActivityMode.training:
             self.mirror = self.cfg.mirror
@@ -80,7 +84,35 @@ class PoseDataset:
         # if self.cfg.pairwise_predict:
         # self.pairwise_stats = load_pairwise_stats(self.cfg)
 
-    def load_dataset(self):
+
+    def load_comic_dataset(self):
+        cfg = self.cfg
+        whole_dataset = read_comic_dataset()
+        max_num_images = len(whole_dataset)
+        if self.activity_mode == ActivityMode.training:
+            start_index = 0
+            end_index = cfg.train_dataset_length
+
+        if self.activity_mode == ActivityMode.validation:
+            start_index = cfg.train_dataset_length
+            end_index = start_index + cfg.validation_dataset_length
+
+        if self.activity_mode == ActivityMode.test:
+            start_index = cfg.validation_dataset_length + cfg.train_dataset_length
+            end_index = start_index + cfg.test_dataset_length
+
+        if end_index > max_num_images:
+            assert True, "End index should not be greater than max num images"
+        data = []
+        has_gt = True
+        for i in range(start_index, end_index):
+            item = whole_dataset[i]
+            data.append(item)
+        self.has_gt = has_gt
+        return data
+
+
+    def load_mpii_dataset(self):
         cfg = self.cfg
         file_name = cfg.dataset
         mlab = sio.loadmat(file_name)
